@@ -1,17 +1,21 @@
-def main():
-    print("Мое приложение: Текстовый 'Сейф'")
-    print("Программа для шифрования и хранения секретных текстов.")
+import json
+import os
+from datetime import datetime
 
 
-if __name__ == "__main__":
-    main()
+DATA_FILE = "secrets.json"
+
+
+secrets = []
 
 
 def encrypt_text(text):
+
     encryption_dict = {
+        # Русские буквы
         "а": "@",
         "б": "ß",
-        "в": "V",
+        "в": "Ⅴ",
         "г": "Γ",
         "д": "Δ",
         "е": "€",
@@ -42,6 +46,7 @@ def encrypt_text(text):
         "э": "Э",
         "ю": "Ю",
         "я": "Я",
+        # Английские буквы
         "a": "@",
         "b": "β",
         "c": "¢",
@@ -72,15 +77,22 @@ def encrypt_text(text):
 
     encrypted = ""
     for char in text:
-        encrypted += encryption_dict.get(char.lower(), char)
+        if char.lower() in encryption_dict:
+            if char.isupper():
+                encrypted += encryption_dict[char.lower()].upper()
+            else:
+                encrypted += encryption_dict[char.lower()]
+        else:
+            encrypted += char
     return encrypted
 
 
 def decrypt_text(encrypted_text):
+
     decryption_dict = {
         "@": "а",
         "ß": "б",
-        "V": "в",
+        "Ⅴ": "в",
         "Γ": "г",
         "Δ": "д",
         "€": "е",
@@ -136,88 +148,15 @@ def decrypt_text(encrypted_text):
 
     decrypted = ""
     for char in encrypted_text:
-        decrypted += decryption_dict.get(char, char)
+        if char in decryption_dict:
+            decrypted += decryption_dict[char]
+        else:
+            decrypted += char
     return decrypted
 
 
-secrets = []
-
-
-def add_secret():
-    print("\n--- Добавить новый секрет ---")
-    title = input("Введите название секрета: ")
-    text = input("Введите текст секрета: ")
-
-    encrypted = encrypt_text(text)
-    secret = {
-        "id": len(secrets) + 1,
-        "title": title,
-        "original": text,
-        "encrypted": encrypted,
-        "date": "2024-01-01",
-    }
-    secrets.append(secret)
-    print(f"✓ Секрет '{title}' добавлен и зашифрован!")
-    print(f"Зашифрованный текст: {encrypted}")
-
-
-def show_all(show_encrypted=False):
-    print("\n--- Все секреты ---")
-    if not secrets:
-        print("Секретов пока нет.")
-        return
-
-    for secret in secrets:
-        print(f"\n[{secret['id']}] {secret['title']}")
-        print(f"   Дата: {secret['date']}")
-        if show_encrypted:
-            print(f"   Зашифрованный: {secret['encrypted']}")
-        else:
-            print(f"   Оригинал: {secret['original']}")
-
-
-def main():
-    while True:
-        print("\n=== Текстовый 'Сейф' ===")
-        print("1. Добавить новый секрет")
-        print("2. Показать все секреты (оригиналы)")
-        print("3. Показать все секреты (зашифрованные)")
-        print("4. Протестировать шифрование")
-        print("5. Выход")
-
-        choice = input("\nВыберите действие (1-5): ")
-
-        if choice == "1":
-            add_secret()
-        elif choice == "2":
-            show_all(show_encrypted=False)
-        elif choice == "3":
-            show_all(show_encrypted=True)
-        elif choice == "4":
-            test_text = input("Введите текст для теста шифрования: ")
-            encrypted = encrypt_text(test_text)
-            decrypted = decrypt_text(encrypted)
-            print(f"Исходный: {test_text}")
-            print(f"Зашифрованный: {encrypted}")
-            print(f"Расшифрованный: {decrypted}")
-        elif choice == "5":
-            print("До свидания!")
-            break
-        else:
-            print("Неверный выбор. Попробуйте снова.")
-
-
-if __name__ == "__main__":
-    main()
-
-import json
-import os
-from datetime import datetime
-
-DATA_FILE = "secrets.json"
-
-
 def load_secrets():
+
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -229,6 +168,7 @@ def load_secrets():
 
 
 def save_secrets():
+
     try:
         data_to_save = []
         for secret in secrets:
@@ -249,9 +189,20 @@ def save_secrets():
 
 
 def add_secret():
-    print("\n--- Добавить новый секрет ---")
-    title = input("Введите название секрета: ")
-    text = input("Введите текст секрета: ")
+
+    print("\n" + "=" * 40)
+    print("ДОБАВИТЬ НОВЫЙ СЕКРЕТ")
+    print("=" * 40)
+
+    title = input("Введите название секрета: ").strip()
+    if not title:
+        print("✗ Название не может быть пустым!")
+        return
+
+    text = input("Введите текст секрета: ").strip()
+    if not text:
+        print("✗ Текст не может быть пустым!")
+        return
 
     encrypted = encrypt_text(text)
     secret = {
@@ -263,22 +214,163 @@ def add_secret():
     }
     secrets.append(secret)
     save_secrets()
-    print(f"✓ Секрет '{title}' добавлен и зашифрован!")
+    print(f"\n✓ Секрет '{title}' успешно добавлен!")
+    print(
+        f"Зашифрованный текст: {encrypted[:50]}..."
+        if len(encrypted) > 50
+        else f"Зашифрованный текст: {encrypted}"
+    )
 
 
-def decrypt_and_show(secret):
-    decrypted = decrypt_text(secret["encrypted"])
-    print(f"\n[{secret['id']}] {secret['title']}")
-    print(f"   Дата: {secret['date']}")
-    print(f"   Текст: {decrypted}")
+def show_all(show_encrypted=False):
 
+    print("\n" + "=" * 40)
+    print("ВСЕ СЕКРЕТЫ" + (" (ЗАШИФРОВАННЫЕ)" if show_encrypted else ""))
+    print("=" * 40)
+
+    if not secrets:
+        print("Секретов пока нет.")
+        return
+
+    for secret in secrets:
+        print(f"\n[{secret['id']}] {secret['title']}")
+        print(f"   Дата: {secret['date']}")
+        if show_encrypted:
+            print(
+                f"   Зашифрованный: {secret['encrypted'][:50]}..."
+                if len(secret["encrypted"]) > 50
+                else f"   Зашифрованный: {secret['encrypted']}"
+            )
+        else:
+            print(
+                f"   Оригинал: {secret['original'][:50]}..."
+                if len(secret["original"]) > 50
+                else f"   Оригинал: {secret['original']}"
+            )
+
+
+def delete_secret():
+
+    show_all(False)
+
+    if not secrets:
+        return
+
+    try:
+        secret_id = int(input("\nВведите ID секрета для удаления: "))
+
+        for i, secret in enumerate(secrets):
+            if secret["id"] == secret_id:
+                confirm = input(
+                    f"Вы уверены, что хотите удалить '{secret['title']}'? (да/нет): "
+                )
+                if confirm.lower() == "да":
+                    deleted = secrets.pop(i)
+                    # Обновляем ID оставшихся секретов
+                    for j, s in enumerate(secrets[i:], start=i):
+                        s["id"] = j + 1
+                    save_secrets()
+                    print(f"✓ Секрет '{deleted['title']}' удален!")
+                else:
+                    print("✗ Удаление отменено.")
+                return
+
+        print(f"✗ Секрет с ID {secret_id} не найден.")
+    except ValueError:
+        print("✗ Введите корректный номер ID!")
+
+
+def search_secrets():
+
+    keyword = input("Введите слово для поиска: ").lower().strip()
+
+    if not keyword:
+        print("✗ Введите слово для поиска!")
+        return
+
+    found = []
+    for secret in secrets:
+        if (
+            keyword in secret["title"].lower()
+            or keyword in secret["original"].lower()
+            or keyword in secret["encrypted"].lower()
+        ):
+            found.append(secret)
+
+    if found:
+        print(f"\nНайдено секретов: {len(found)}")
+        for secret in found:
+            print(f"\n[{secret['id']}] {secret['title']}")
+            print(f"   Дата: {secret['date']}")
+            print(f"   Текст: {secret['original'][:50]}...")
+    else:
+        print("✗ Секреты не найдены.")
+
+
+def test_encryption():
+
+    print("\n" + "=" * 40)
+    print("ТЕСТ ШИФРОВАНИЯ")
+    print("=" * 40)
+
+    test_text = input("Введите текст для теста: ")
+
+    if not test_text:
+        print("✗ Введите текст для теста!")
+        return
+
+    encrypted = encrypt_text(test_text)
+    decrypted = decrypt_text(encrypted)
+
+    print("\nРезультаты теста:")
+    print("-" * 30)
+    print(f"Исходный текст:    {test_text}")
+    print(f"Зашифрованный текст: {encrypted}")
+    print(f"Расшифрованный текст: {decrypted}")
+    print("-" * 30)
+
+    if test_text == decrypted:
+        print("✓ Шифрование работает корректно!")
+    else:
+        print("✗ Ошибка в шифровании/дешифровании!")
+
+
+def show_statistics():
+
+    print("\n" + "=" * 40)
+    print("СТАТИСТИКА")
+    print("=" * 40)
+
+    print(f"Всего секретов: {len(secrets)}")
+
+    if secrets:
+        dates = [datetime.strptime(s["date"], "%Y-%m-%d %H:%M") for s in secrets]
+        oldest = min(dates).strftime("%Y-%m-%d")
+        newest = max(dates).strftime("%Y-%m-%d")
+
+        print(f"Период: с {oldest} по {newest}")
+
+        longest = max(secrets, key=lambda x: len(x["original"]))
+        print(
+            f"Самый длинный секрет: '{longest['title']}' ({len(longest['original'])} символов)"
+        )
+
+        total_chars = sum(len(s["original"]) for s in secrets)
+        print(f"Всего символов: {total_chars}")
 
 
 def main():
-    global secrets
-    print("Загрузка секретов из файла...")
-    secrets_data = load_secrets()
 
+    global secrets
+
+    print("\n" + "=" * 50)
+    print("        ТЕКСТОВЫЙ 'СЕЙФ' v1.0")
+    print("=" * 50)
+    print("Программа для безопасного хранения секретов")
+    print("=" * 50)
+
+    print("\nЗагрузка данных...")
+    secrets_data = load_secrets()
 
     for secret_data in secrets_data:
         secret = {
@@ -290,18 +382,58 @@ def main():
         }
         secrets.append(secret)
 
-    print(f"Загружено {len(secrets)} секретов")
+    print(f"✓ Загружено {len(secrets)} секретов")
 
     while True:
+        print("\n" + "=" * 50)
+        print("ГЛАВНОЕ МЕНЮ")
+        print("=" * 50)
+        print("1. Добавить новый секрет")
+        print("2. Показать все секреты (оригиналы)")
+        print("3. Показать все секреты (зашифрованные)")
+        print("4. Удалить секрет")
+        print("5. Поиск секретов")
+        print("6. Тестирование шифрования")
+        print("7. Статистика")
+        print("8. Выход")
+        print("=" * 50)
+
+        choice = input("\nВыберите действие (1-8): ").strip()
+
+        if choice == "1":
+            add_secret()
+        elif choice == "2":
+            show_all(show_encrypted=False)
+        elif choice == "3":
+            show_all(show_encrypted=True)
+        elif choice == "4":
+            delete_secret()
+        elif choice == "5":
+            search_secrets()
+        elif choice == "6":
+            test_encryption()
+        elif choice == "7":
+            show_statistics()
+        elif choice == "8":
+            save_secrets()
+            print("\n" + "=" * 50)
+            print("Спасибо за использование Текстового 'Сейфа'!")
+            print("Все данные сохранены в файл secrets.json")
+            print("=" * 50)
+            break
+        else:
+            print("\n✗ Неверный выбор. Введите число от 1 до 8.")
+
+        input("\nНажмите Enter чтобы продолжить...")
 
 
-save_secrets()
-print("До свидания!")
-
-
-def safe_input(prompt, default=""):
-
+if __name__ == "__main__":
     try:
-        return input(prompt)
-    except (EOFError, KeyboardInterrupt):
-        return default
+        main()
+    except KeyboardInterrupt:
+        print("\n\nПрограмма прервана. Сохранение данных...")
+        save_secrets()
+        print("До свидания!")
+    except Exception as e:
+        print(f"\n✗ Произошла ошибка: {e}")
+        print("Попробуйте перезапустить программу.")
