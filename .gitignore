@@ -7,3 +7,5 @@ venv/
 *.log
 data.json
 .idea
+secrets.json
+.venv
