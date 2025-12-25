@@ -46,9 +46,9 @@
 
 3\. Скачайте проект:
 
-&nbsp;  ```cmd
+   ```cmd
 
-&nbsp;  git clone https://github.com/pxvws/imgonnacrashout.git
+   git clone git@github.com:pxvws/imgonnacrashout.git
 
-&nbsp;  cd text-safe
+   cd text-safe
 
